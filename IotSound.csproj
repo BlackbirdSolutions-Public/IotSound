@@ -104,6 +104,7 @@
     <Compile Include="GPIOInterface.cs" />
     <Compile Include="MidiMessage.cs" />
     <Compile Include="MidiUtils.cs" />
+    <Compile Include="SoftSynth.cs" />
     <Compile Include="StartupTask.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

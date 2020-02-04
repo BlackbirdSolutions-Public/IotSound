@@ -7,13 +7,30 @@ using Windows.Devices.Gpio;
 
 namespace IotSound
 {
-    class GPIOInterface : IDisposable
+    public class GPIOInterface : IDisposable
     {
+        private static GPIOInterface instance = null;
+        private static readonly object padlock = new object();
         private const int LED_PIN = 5;
         private GpioPin pin;
-        GpioController gpio;
+        private GpioController gpio;
 
-        public GPIOInterface()
+        public static GPIOInterface Instance
+        {
+            get
+            {
+                lock (padlock)
+                {
+                    if (instance == null)
+                    {
+                        instance = new GPIOInterface();
+                    }
+                    return instance;
+                }
+            }
+        }
+
+        private GPIOInterface()
         {
             //Initialize the controller
             gpio = GpioController.GetDefault();
@@ -27,21 +44,19 @@ namespace IotSound
             pin.SetDriveMode(GpioPinDriveMode.Output);
         }
 
-        public async Task<int> FlashLed (int count, int interval, Action<bool> callback)
+        public void FlashLed(int count, int interval)
         {
             bool state = false;
             for (int o = 0; o < count; o++)
             {
                 state = !state;
-                callback(state);
                 pin.Write(GpioPinValue.Low);
                 System.Threading.Thread.Sleep(interval);
                 state = !state;
-                callback(state);
                 pin.Write(GpioPinValue.High);
                 System.Threading.Thread.Sleep(interval);
             }
-            return await Task.FromResult(0);
+            //return await Task.FromResult((uint)0);
         }
 
         #region IDisposable Support

@@ -13,14 +13,6 @@ namespace IotSound
 {
     // We are initializing a COM interface for use within the namespace
     // This interface allows access to memory at the byte level which we need to populate audio data that is generated
-    [ComImport]
-    [Guid("5B0D3235-4DBA-4D44-865E-8F1D0E4FD04D")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-
-    unsafe interface IMemoryBufferByteAccess
-    {
-        void GetBuffer(out byte* buffer, out uint capacity);
-    }
 
     class MidiUtils : IDisposable
     {
@@ -36,7 +28,6 @@ namespace IotSound
         private DataReader DataReaderObject = null;
         private DataWriter DataWriterObject;
         private CancellationTokenSource ReadCancellationTokenSource;
-        private Queue channel0 = new Queue();
         public const uint _MIDI_BAUD_RATE = 31250;
 
         public void RegisterChannelCallback(uint Channel, Action<MidiMessage> callback)
@@ -62,22 +53,13 @@ namespace IotSound
             switch (msg.Channel)
             {
                 case 0:
-                    if (Channel0Message!=null)
-                    {
-                        Channel0Message(msg);
-                    }
+                    Channel0Message?.Invoke(msg);
                     break;
                 case 1:
-                    if (Channel1Message != null)
-                    {
-                        Channel1Message(msg);
-                    }
+                    Channel1Message?.Invoke(msg);
                     break;
                 case 2:
-                    if (Channel2Message != null)
-                    {
-                        Channel2Message(msg);
-                    }
+                    Channel2Message?.Invoke(msg);
                     break;
                 default:
                     break;
@@ -100,8 +82,10 @@ namespace IotSound
                 UartPort.StopBits = SerialStopBitCount.One;
                 UartPort.DataBits = 8;
 
-                DataReaderObject = new DataReader(UartPort.InputStream);
-                DataReaderObject.InputStreamOptions = InputStreamOptions.Partial;
+                DataReaderObject = new DataReader(UartPort.InputStream)
+                {
+                    InputStreamOptions = InputStreamOptions.Partial
+                };
                 DataWriterObject = new DataWriter(UartPort.OutputStream);
 
             }
@@ -110,16 +94,6 @@ namespace IotSound
                 throw new Exception("Uart Initialize Error", ex);
             }
             return 0;
-        }
-
-        public MidiMessage GetNextMidiMessage(int channelNum)
-        {
-            if (channel0.Count>0)
-            { 
-                MidiMessage mm = (MidiMessage)channel0.Dequeue();
-                return mm;
-            }
-            return null;
         }
 
         //***********************************
@@ -134,7 +108,8 @@ namespace IotSound
         public async Task<int> StartReceive()
         {
             ReadCancellationTokenSource = new CancellationTokenSource();
-
+            GPIOInterface theDevice = GPIOInterface.Instance;
+            theDevice.FlashLed(1, 10);
             while (true)
             {
                 await Listen().ConfigureAwait(false);

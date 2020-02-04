@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Runtime.InteropServices;
+using System.Threading;
 using Windows.ApplicationModel.Background;
 
 
@@ -6,20 +7,31 @@ using Windows.ApplicationModel.Background;
 
 namespace IotSound
 {
+    [ComImport]
+    [Guid("5B0D3235-4DBA-4D44-865E-8F1D0E4FD04D")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    unsafe interface IMemoryBufferByteAccess
+    {
+        void GetBuffer(out byte* buffer, out uint capacity);
+    }
+
     public sealed class StartupTask : IBackgroundTask
     {
         GPIOInterface theDevice;
         MidiUtils mrMidi;
+        SoftSynth mrSound;
+
         public void Run(IBackgroundTaskInstance taskInstance)
         {
             // 
             // TODO: Insert code to perform background work
-            theDevice = new GPIOInterface();
+            theDevice = GPIOInterface.Instance;
+            mrSound = new SoftSynth();
             mrMidi = new MidiUtils();
             var xx = mrMidi.Initialize();
             mrMidi.RegisterChannelCallback(0, HandleMidiMessage);
             var yy = mrMidi.StartReceive();
-            
+
             // If you start any asynchronous methods here, prevent the task
             // from closing prematurely by using BackgroundTaskDeferral as
             // described in http://aka.ms/backgroundtaskdeferral
@@ -28,7 +40,8 @@ namespace IotSound
 
         public void HandleMidiMessage(MidiMessage theMessage)
         {
-            var res = theDevice.FlashLed(1, 10, GPIOStatus);
+            theDevice.FlashLed(1, 10);
+            mrSound.Play();
         }
 
         public void GPIOStatus(bool status)
