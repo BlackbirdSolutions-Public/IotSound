@@ -29,6 +29,7 @@ namespace IotSound
             mrSound = new SoftSynth();
             mrMidi = new MidiUtils();
             var xx = mrMidi.Initialize();
+            xx.Wait();
             mrMidi.RegisterChannelCallback(0, HandleMidiMessage);
             var yy = mrMidi.StartReceive();
 

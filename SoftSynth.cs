@@ -90,6 +90,7 @@ namespace IotSound
 
         unsafe private AudioFrame GenerateAudioData(uint samples)
         {
+            //samples = 100;
             // Buffer size is (number of samples) * (size of each sample)
             // We choose to generate single channel (mono) audio. For multi-channel, multiply by number of channels
             AudioFrame frame = new Windows.Media.AudioFrame(samples * sizeof(float));
