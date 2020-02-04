@@ -126,6 +126,7 @@ namespace IotSound
         {
             // Create an AudioGraph with default settings
             AudioGraphSettings settings = new AudioGraphSettings(AudioRenderCategory.Media);
+            settings.QuantumSizeSelectionMode = QuantumSizeSelectionMode.LowestLatency;
             CreateAudioGraphResult result = await AudioGraph.CreateAsync(settings);
 
             if (result.Status != AudioGraphCreationStatus.Success)
