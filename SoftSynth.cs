@@ -47,12 +47,39 @@ namespace IotSound
 
         }
 
-        public async void Play()
+        public void ProcessMessage(MidiMessage theMessage)
         {
+            switch (theMessage.MessageClass)
+            {
+                case 0:
+                    NoteOff(theMessage);
+                    break;
+                case 1:
+                    NoteOn(theMessage);
+                    break;
+                default:
+                    break;
+            }    
+
+        }
+        
+        public void NoteOn(MidiMessage theMessage)
+        {
+            freq = keyboard[theMessage.Data1];
             if (!FrameStatus)
             {
                 FrameStatus = true;
                 frameInputNode.Start();
+            }
+        }
+
+        public void NoteOff(MidiMessage theMessage)
+        {
+            freq = keyboard[theMessage.Data1];
+            if (FrameStatus)
+            {
+                FrameStatus = false;
+                frameInputNode.Stop();
             }
         }
 

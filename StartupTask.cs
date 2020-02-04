@@ -40,8 +40,8 @@ namespace IotSound
 
         public void HandleMidiMessage(MidiMessage theMessage)
         {
-            theDevice.FlashLed(1, 10);
-            mrSound.Play();
+            //theDevice.FlashLed(1, 10);
+            mrSound.ProcessMessage(theMessage);
         }
 
         public void GPIOStatus(bool status)
