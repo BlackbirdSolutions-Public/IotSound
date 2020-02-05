@@ -37,11 +37,10 @@ namespace IotSound
         {
             //a virtual 128 note keyboard.
             //all possible midi note values
-            for (int i = 0; i < 127; i++)
+            float a = 440; // a is 440 hz...
+            for (int x = 0; x < 127; ++x)
             {
-                double j = (double)i + 1d;
-                double z = ((j - 49) / 12);
-                keyboard[i] = (float)Math.Pow(2.0, z) * 440;
+                keyboard[x] = (a / 32f) * (float)Math.Pow(2f, ((x - 9f) / 12f));
             }
             var xx = CreateAudioGraph();
 
@@ -90,7 +89,7 @@ namespace IotSound
 
         unsafe private AudioFrame GenerateAudioData(uint samples)
         {
-            //samples = 100;
+            samples = 500;
             // Buffer size is (number of samples) * (size of each sample)
             // We choose to generate single channel (mono) audio. For multi-channel, multiply by number of channels
             AudioFrame frame = new Windows.Media.AudioFrame(samples * sizeof(float));
