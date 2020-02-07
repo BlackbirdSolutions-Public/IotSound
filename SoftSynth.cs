@@ -15,18 +15,9 @@ namespace IotSound
     {
         private AudioGraph graph;
         private AudioDeviceOutputNode deviceOutputNode;
-        private AudioFrameInputNode frameInputNode1;
-        private bool Node1Busy = false;
-        private AudioFrameInputNode frameInputNode2;
-        private bool Node2Busy = false;
-        private AudioFrameInputNode frameInputNode3;
-        private bool Node3Busy = false;
-        private float freq1 = 440.0F;
-        private float freq2 = 440.0F;
-        private float freq3 = 440.0F;
-        private double theta1 = 0F;
-        private double theta2 = 0F;
-        private double theta3 = 0F;
+        private WaveGenerator wg1;
+        private WaveGenerator wg2;
+        private WaveGenerator wg3;
 
         private readonly float[] keyboard = new float[127];
         private int[] notes = new int[127];
@@ -52,7 +43,6 @@ namespace IotSound
                 notes[x] = 0;
             }
             var xx = CreateAudioGraph();
-
         }
 
         public void ProcessMessage(MidiMessage theMessage)
@@ -75,25 +65,21 @@ namespace IotSound
         {
             if (notes[theMessage.Data1] == 0)
             {
-                if (!Node1Busy)
+                if (!wg1.isBusy())
                 {
                     notes[theMessage.Data1] = 1;
-                    Node1Busy = true;
-                    freq1 = keyboard[theMessage.Data1];
-                    frameInputNode1.Start();
-                } else if (!Node2Busy)
+                    wg1.On();
+                    wg1.Freq = keyboard[theMessage.Data1];
+                } else if (!wg2.isBusy())
                 {
                     notes[theMessage.Data1] = 2;
-                    Node2Busy = true;
-                    freq2 = keyboard[theMessage.Data1];
-                    frameInputNode2.Start();
-                }
-                else if (!Node3Busy)
+                    wg2.On();
+                    wg2.Freq = keyboard[theMessage.Data1];
+                } else if (!wg3.isBusy())
                 {
                     notes[theMessage.Data1] = 3;
-                    Node3Busy = true;
-                    freq3 = keyboard[theMessage.Data1];
-                    frameInputNode3.Start();
+                    wg3.On();
+                    wg3.Freq = keyboard[theMessage.Data1];
                 }
 
             }
@@ -104,136 +90,26 @@ namespace IotSound
             if (notes[theMessage.Data1] == 1)
             {
                 notes[theMessage.Data1] = 0;
-                frameInputNode1.Stop();
-                theta1 = 0;
-                Node1Busy = false;
+                wg1.Off();
             } else if (notes[theMessage.Data1] == 2)
             {
                 notes[theMessage.Data1] = 0;
-                frameInputNode2.Stop();
-                theta2 = 0;
-                Node2Busy = false;
+                wg2.Off();
             }
             else if (notes[theMessage.Data1] == 3)
             {
                 notes[theMessage.Data1] = 0;
-                frameInputNode3.Stop();
-                theta3 = 0;
-                Node3Busy = false;
+                wg3.Off();
             }
         }
 
         public void Stop()
         {
-            frameInputNode1.Reset();
-            frameInputNode2.Reset();
-            frameInputNode3.Reset();
+            wg1.Off();
+            wg2.Off();
+            wg3.Off();
         }
 
-        unsafe private AudioFrame GenerateAudioData1(uint samples)
-        {
-            // Buffer size is (number of samples) * (size of each sample)
-            // We choose to generate single channel (mono) audio. For multi-channel, multiply by number of channels
-            AudioFrame frame = new Windows.Media.AudioFrame(samples * sizeof(float));
-            using (AudioBuffer buffer = frame.LockBuffer(AudioBufferAccessMode.Write))
-            using (IMemoryBufferReference reference = buffer.CreateReference())
-            {
-                byte* dataInBytes;
-                uint capacityInBytes;
-                float* dataInFloat;
-
-                // Get the buffer from the AudioFrame
-                //This is the invalid cast problem here.
-                ((IMemoryBufferByteAccess)reference).GetBuffer(out dataInBytes, out capacityInBytes);
-
-                // Cast to float since the data we are generating is float
-                dataInFloat = (float*)dataInBytes;
-
-                float amplitude = 0.3f;
-                int sampleRate = (int)graph.EncodingProperties.SampleRate;
-                double sampleIncrement = (freq1 * (Math.PI * 2)) / sampleRate;
-
-                // Generate a 1kHz sine wave and populate the values in the memory buffer
-                for (int i = 0; i < samples; i++)
-                {
-                    double sinValue = amplitude * Math.Sin(theta1);
-                    dataInFloat[i] = (float)sinValue;
-                    theta1 += sampleIncrement;
-                }
-            }
-
-            return frame;
-        }
-
-        unsafe private AudioFrame GenerateAudioData2(uint samples)
-        {
-            // Buffer size is (number of samples) * (size of each sample)
-            // We choose to generate single channel (mono) audio. For multi-channel, multiply by number of channels
-            AudioFrame frame = new Windows.Media.AudioFrame(samples * sizeof(float));
-            using (AudioBuffer buffer = frame.LockBuffer(AudioBufferAccessMode.Write))
-            using (IMemoryBufferReference reference = buffer.CreateReference())
-            {
-                byte* dataInBytes;
-                uint capacityInBytes;
-                float* dataInFloat;
-
-                // Get the buffer from the AudioFrame
-                //This is the invalid cast problem here.
-                ((IMemoryBufferByteAccess)reference).GetBuffer(out dataInBytes, out capacityInBytes);
-
-                // Cast to float since the data we are generating is float
-                dataInFloat = (float*)dataInBytes;
-
-                float amplitude = 0.3f;
-                int sampleRate = (int)graph.EncodingProperties.SampleRate;
-                double sampleIncrement = (freq2 * (Math.PI * 2)) / sampleRate;
-
-                // Generate a 1kHz sine wave and populate the values in the memory buffer
-                for (int i = 0; i < samples; i++)
-                {
-                    double sinValue = amplitude * Math.Sin(theta2);
-                    dataInFloat[i] = (float)sinValue;
-                    theta2 += sampleIncrement;
-                }
-            }
-
-            return frame;
-        }
-
-        unsafe private AudioFrame GenerateAudioData3(uint samples)
-        {
-            // Buffer size is (number of samples) * (size of each sample)
-            // We choose to generate single channel (mono) audio. For multi-channel, multiply by number of channels
-            AudioFrame frame = new Windows.Media.AudioFrame(samples * sizeof(float));
-            using (AudioBuffer buffer = frame.LockBuffer(AudioBufferAccessMode.Write))
-            using (IMemoryBufferReference reference = buffer.CreateReference())
-            {
-                byte* dataInBytes;
-                uint capacityInBytes;
-                float* dataInFloat;
-
-                // Get the buffer from the AudioFrame
-                //This is the invalid cast problem here.
-                ((IMemoryBufferByteAccess)reference).GetBuffer(out dataInBytes, out capacityInBytes);
-
-                // Cast to float since the data we are generating is float
-                dataInFloat = (float*)dataInBytes;
-
-                float amplitude = 0.3f;
-                int sampleRate = (int)graph.EncodingProperties.SampleRate;
-                double sampleIncrement = (freq3 * (Math.PI * 2)) / sampleRate;
-
-                // Generate a 1kHz sine wave and populate the values in the memory buffer
-                for (int i = 0; i < samples; i++)
-                {
-                    double sinValue = amplitude * Math.Sin(theta3);
-                    dataInFloat[i] = (float)sinValue;
-                    theta3 += sampleIncrement;
-                }
-            }
-
-            return frame;
-        }
 
         private async Task CreateAudioGraph()
         {
@@ -256,63 +132,21 @@ namespace IotSound
             {
                 // Cannot create device output node
             }
-
+            //Only need one of these
             deviceOutputNode = deviceOutputNodeResult.DeviceOutputNode;
- 
+
             // Create the FrameInputNode at the same format as the graph, except explicitly set mono.
-            AudioEncodingProperties nodeEncodingProperties = graph.EncodingProperties;
-            nodeEncodingProperties.ChannelCount = 1;
-            frameInputNode1 = graph.CreateFrameInputNode(nodeEncodingProperties);
-            // Initialize the Frame Input Node in the stopped state
-            frameInputNode1.Stop();
-            frameInputNode1.AddOutgoingConnection(deviceOutputNode);
-            // This event is triggered when the node is required to provide data
-            frameInputNode1.QuantumStarted += node_QuantumStarted;
-
-            frameInputNode2 = graph.CreateFrameInputNode(nodeEncodingProperties);
-            // Initialize the Frame Input Node in the stopped state
-            frameInputNode2.Stop();
-            frameInputNode2.AddOutgoingConnection(deviceOutputNode);
-            // This event is triggered when the node is required to provide data
-            frameInputNode2.QuantumStarted += node_QuantumStarted;
-
-            frameInputNode3 = graph.CreateFrameInputNode(nodeEncodingProperties);
-            // Initialize the Frame Input Node in the stopped state
-            frameInputNode3.Stop();
-            frameInputNode3.AddOutgoingConnection(deviceOutputNode);
-            // This event is triggered when the node is required to provide data
-            frameInputNode3.QuantumStarted += node_QuantumStarted;
+            wg1 = new WaveGenerator(graph);
+            wg1.SetDeviceOutputNode(deviceOutputNode);
+            wg2 = new WaveGenerator(graph);
+            wg2.SetDeviceOutputNode(deviceOutputNode);
+            wg3 = new WaveGenerator(graph);
+            wg3.SetDeviceOutputNode(deviceOutputNode);
 
             // Start the graph since we will only start/stop the frame input node
             graph.Start();
         }
 
-        private void node_QuantumStarted(AudioFrameInputNode sender, FrameInputNodeQuantumStartedEventArgs args)
-        {
-
-            // GenerateAudioData can provide PCM audio data by directly synthesizing it or reading from a file.
-            // Need to know how many samples are required. In this case, the node is running at the same rate as the rest of the graph
-            // For minimum latency, only provide the required amount of samples. Extra samples will introduce additional latency.
-            uint numSamplesNeeded = (uint)args.RequiredSamples;
-            if (numSamplesNeeded != 0)
-            {
-                if (sender == frameInputNode1)
-            {
-                AudioFrame audioData = GenerateAudioData1(numSamplesNeeded);
-                sender.AddFrame(audioData);
-            } else if (sender == frameInputNode2)
-            {
-                AudioFrame audioData = GenerateAudioData2(numSamplesNeeded);
-                sender.AddFrame(audioData);
-            }
-            else if (sender == frameInputNode3)
-            {
-                AudioFrame audioData = GenerateAudioData3(numSamplesNeeded);
-                sender.AddFrame(audioData);
-            }
-
-            }
-        }
 
     }
 }

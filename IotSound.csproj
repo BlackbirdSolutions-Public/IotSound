@@ -101,12 +101,14 @@
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="EnvelopeGenerator.cs" />
     <Compile Include="GPIOInterface.cs" />
     <Compile Include="MidiMessage.cs" />
     <Compile Include="MidiUtils.cs" />
     <Compile Include="SoftSynth.cs" />
     <Compile Include="StartupTask.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WaveGenerator.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
