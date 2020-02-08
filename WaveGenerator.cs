@@ -10,17 +10,40 @@ namespace IotSound
     {
         private float freq = 440.0F;
         private double theta = 0F;
-        private double amplitude = 0.3F;
+        //private double amplitude = 0.3F;
         private int sampleRate = 44100;
+        private int currentSample = 0;
         private AudioFrameInputNode inputNode;
         private AudioGraph graph;
         private AudioDeviceOutputNode deviceOutputNode;
         private bool on = false;
+        private EnvelopeGenerator eg;
 
         public float Freq { get => freq; set => freq = value; }
         public double Theta { get => theta; set => theta = value; }
-        public double Amplitude { get => amplitude; set => amplitude = value; }
+        //public double Amplitude { get => amplitude; set => amplitude = value; }
         public int SampleRate { get => sampleRate; }
+
+        public void Attack(int newValue)
+        {
+            //0-127 *350 ~ 1 second;
+            eg.Attack = newValue*350;
+        }
+        public void Decay(int newValue)
+        {
+            //0-127 *350 ~ 1 second;
+            eg.Decay = newValue * 350;
+        }
+        public void Release(int newValue)
+        {
+            //0-127 *350 ~ 1 second;
+            eg.Release = newValue * 350;
+        }
+        public void Sustain(int newValue)
+        {
+            //0-127 *350 ~ 1 second;
+            eg.Sustain = newValue * 0.0027f;
+        }
 
         public bool isBusy()
         {
@@ -30,15 +53,24 @@ namespace IotSound
         public void On()
         {
             //...or inputNode.Start()?
-            amplitude = 0.3F;
+            eg.Gate = true;
             on = true;
+            currentSample = 0;
+            theta = 0f;
         }
+
         public void Off()
         {
-            //...or inputNode.Stop()?
-            amplitude = 0.0F;
+            //...or inputNode.Start()?
+            eg.Gate = false;
             on = false;
-            theta = 0.0f;
+            currentSample = 0;
+            theta = 0f;
+        }
+        public void Release()
+        {
+            //...or inputNode.Stop()?
+            eg.Gate = false;
         }
 
         public WaveGenerator(AudioGraph theGraph)
@@ -46,10 +78,12 @@ namespace IotSound
             graph = theGraph;
             AudioEncodingProperties nodeEncodingProperties = graph.EncodingProperties;
             nodeEncodingProperties.ChannelCount = 1;
-            //nodeEncodingProperties.Bitrate = 44100;
             sampleRate = 44100;
             inputNode = graph.CreateFrameInputNode(nodeEncodingProperties);
             inputNode.Stop();
+            eg = new EnvelopeGenerator();
+            eg.Level = 0.35f; //Set volume to a reasonable value;
+            Off();
         }
 
         public void SetDeviceOutputNode(AudioDeviceOutputNode theNode)
@@ -58,7 +92,7 @@ namespace IotSound
             inputNode.AddOutgoingConnection(deviceOutputNode);
             // This event is triggered when the node is required to provide data
             inputNode.QuantumStarted += node_QuantumStarted;
-            Off();
+            on = false;
             inputNode.Start();
         }
         public AudioFrameInputNode getFrameInputNode()
@@ -88,6 +122,8 @@ namespace IotSound
             using (AudioBuffer buffer = frame.LockBuffer(AudioBufferAccessMode.Write))
             using (IMemoryBufferReference reference = buffer.CreateReference())
             {
+                double level = 0.0f;
+                double sinValue;
                 byte* dataInBytes;
                 uint capacityInBytes;
                 float* dataInFloat;
@@ -98,15 +134,30 @@ namespace IotSound
 
                 // Cast to float since the data we are generating is float
                 dataInFloat = (float*)dataInBytes;
-
                 double sampleIncrement = (freq * (Math.PI * 2)) / sampleRate;
 
-                // Generate a 1kHz sine wave and populate the values in the memory buffer
+                //issue here is that theta isn't the number of samples...
                 for (int i = 0; i < samples; i++)
                 {
-                    double sinValue = amplitude * Math.Sin(theta);
-                    dataInFloat[i] = (float)sinValue;
+                    if (isBusy())
+                    {
+                        level = eg.GetLevelAtInterval(currentSample);
+                        sinValue = level * Math.Sin(theta);
+                        dataInFloat[i] = (float)sinValue;
+
+                    } else
+                    {
+                        dataInFloat[i] = 0.0f;
+                    }
                     theta += sampleIncrement;
+                    currentSample += 1;
+                    if (!eg.Gate)
+                    {
+                        if (level <= 0 && isBusy())
+                        {
+                            Off();
+                        }
+                    }
                 }
             }
 

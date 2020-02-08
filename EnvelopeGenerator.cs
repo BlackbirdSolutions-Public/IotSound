@@ -8,22 +8,31 @@ namespace IotSound
 {
     class EnvelopeGenerator
     {
+        //here is how this works:
+        //if the gate is off and theta = 0; then the wave generator is idle.
+        //we would always return an amplitude of 0
+        //If the gate is on then the amplitude is determined by a function
+        //of theta (Number of samples from the start) and the max amplitude
+        //
+
         private double level = 0.35f; //
         private int sampleRate = 44100;
         private int attack = 1000;//time in samples
         private int decay = 43000;//time in samples
         private double sustain = 0f;//value
+        private double releaseLevel = 0f;//value
         private int release = 0;//time in samples
-        private double releaseThetaStart = 0;
+        private double releaseSampleStart = 0;
+        private bool gate = false;
 
-        public EnvelopeGenerator(int sampleRate, double level, int attack, int decay, float sustain, int release)
+        public EnvelopeGenerator()
         {
-            this.sampleRate = sampleRate;
-            this.level = level;
-            this.attack = attack;
-            this.decay = decay;
-            this.sustain = sustain;
-            this.release = release;
+            this.sampleRate = 44100;
+            this.level = 0.35f;
+            this.attack = 0;
+            this.decay = 0;
+            this.sustain = 0.35;
+            this.release = 0;
         }
 
         public int SampleRate { get => sampleRate; set => sampleRate = value; }
@@ -32,51 +41,55 @@ namespace IotSound
         public double Sustain { get => sustain; set => sustain = value; }
         public int Release { get => release; set => release = value; }
         public double Level { get => level; set => level = value; }
+        public bool Gate { get => gate; set => gate = value; }
 
-        public double GetLevelAtInterval(double theta, bool gateOn)
+        public double GetLevelAtInterval(int SampleIndex)
         {
-            double value = 0f;
-            theta = theta + 1;
-
-            if (gateOn)
+            if (gate)
             {
                 //the sound should be emitting
                 //so reset the stating point for the release cycle
-                releaseThetaStart = 0;
-                if (theta <= attack && level > 0)
+                releaseSampleStart = 0;
+                if (SampleIndex <= attack && level > 0)
                 {
-                    value = (level / attack * theta);
+                   releaseLevel = level / attack * SampleIndex;
+                    return releaseLevel;
                 }
-
-                if (theta <= attack + decay)
+                // decay and sustain
+                if (SampleIndex <= attack + decay)
                 {
                     double s = (level - sustain); //amplitude differential
-                    double d = theta - attack; //how far into the decay
+                    double d = SampleIndex - attack; //how far into the decay
                     if (d <= 0) { return sustain; } //cliff to sustain level
-                    if (s > 0)
-                    {
-                        value = level - (s / decay * (d));
+                    if (s > 0) {
+                        releaseLevel = level - (s / decay * (d));
+                        return releaseLevel;
                     }
-                    else
-                    {
-                        value = level;
+                    else  {
+                        releaseLevel = sustain;
+                        return releaseLevel;
                     }
+                } else {
+                    releaseLevel =  sustain;
+                    return releaseLevel;
                 }
-            } else //we are in release mode
+            } else //gate is off
             {
-                if (releaseThetaStart == 0) { releaseThetaStart = theta; }
+                //entering this block for the first time
+                if (releaseSampleStart == 0) { 
+                    releaseSampleStart = SampleIndex; 
+                }
                 //release goes to 0 in the number of samples supplied
-                if (sustain > 0)
+                if (SampleIndex > 0 && sustain > 0)
                 {
                     //sustain/release is the level differential for each sample
-                    value = (sustain / release) * (theta - releaseThetaStart);
+                    return sustain - (sustain / release) * (SampleIndex - releaseSampleStart);
                 } else
                 {
-                    value = 0;
+                    return 0;
                 }
+                
             }
-
-            return value;
         }
 
     }

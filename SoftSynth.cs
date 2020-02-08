@@ -22,11 +22,6 @@ namespace IotSound
         private readonly float[] keyboard = new float[127];
         private int[] notes = new int[127];
 
-        //unsafe interface IMemoryBufferByteAccess
-        //{
-        //    void GetBuffer(out byte* buffer, out uint capacity);
-        //}
-
         public SoftSynth()
         {
             InitializeMe();
@@ -43,17 +38,21 @@ namespace IotSound
                 notes[x] = 0;
             }
             var xx = CreateAudioGraph();
+            xx.Wait();
         }
 
         public void ProcessMessage(MidiMessage theMessage)
         {
             switch (theMessage.MessageClass)
             {
-                case 0:
+                case MsgClass.NOTE_OFF:
                     NoteOff(theMessage);
                     break;
-                case 1:
+                case MsgClass.NOTE_ON:
                     NoteOn(theMessage);
+                    break;
+                case MsgClass.CONTROL_CHANGE:
+                    ControlChange(theMessage);
                     break;
                 default:
                     break;
@@ -90,16 +89,50 @@ namespace IotSound
             if (notes[theMessage.Data1] == 1)
             {
                 notes[theMessage.Data1] = 0;
-                wg1.Off();
+                wg1.Release();
             } else if (notes[theMessage.Data1] == 2)
             {
                 notes[theMessage.Data1] = 0;
-                wg2.Off();
+                wg2.Release();
             }
             else if (notes[theMessage.Data1] == 3)
             {
                 notes[theMessage.Data1] = 0;
-                wg3.Off();
+                wg3.Release();
+            }
+        }
+
+        public void ControlChange(MidiMessage theMessage)
+        {
+            //1=Attack
+            //2=Decay
+            //3=Sustain
+            //4=Release
+            int controlNum = theMessage.Data1;
+            switch (controlNum)
+            {
+                case 0:
+                    wg1.Attack(theMessage.Data2);
+                    wg2.Attack(theMessage.Data2);
+                    wg3.Attack(theMessage.Data2);
+                    break;
+                case 1:
+                    wg1.Decay(theMessage.Data2);
+                    wg2.Decay(theMessage.Data2);
+                    wg3.Decay(theMessage.Data2);
+                    break;
+                case 2:
+                    wg1.Sustain(theMessage.Data2);
+                    wg2.Sustain(theMessage.Data2);
+                    wg3.Sustain(theMessage.Data2);
+                    break;
+                case 3:
+                    wg1.Release(theMessage.Data2);
+                    wg2.Release(theMessage.Data2);
+                    wg3.Release(theMessage.Data2);
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -109,7 +142,6 @@ namespace IotSound
             wg2.Off();
             wg3.Off();
         }
-
 
         private async Task CreateAudioGraph()
         {
