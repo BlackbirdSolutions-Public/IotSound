@@ -83,7 +83,7 @@ namespace IotSound
                 if (SampleIndex > 0 && sustain > 0)
                 {
                     //sustain/release is the level differential for each sample
-                    return sustain - (sustain / release) * (SampleIndex - releaseSampleStart);
+                    return releaseLevel - (releaseLevel / release) * (SampleIndex - releaseSampleStart);
                 } else
                 {
                     return 0;

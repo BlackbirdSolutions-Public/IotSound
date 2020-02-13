@@ -169,18 +169,30 @@ namespace IotSound
                                     {
                                         //there is data in the current message
                                         RouteMessage(ChannelMessage);
+                                        ChannelMessage = new MidiMessage(Data);
+                                    } else { //No data in the message
+                                        ChannelMessage.Status = Data;
+                                        if (MidiMessage.ByteCount(ChannelMessage.MessageClass) == 0)
+                                        {
+                                            RouteMessage(ChannelMessage);
+                                            ChannelMessage = new MidiMessage();
+                                        }
                                     }
-                                    ChannelMessage = new MidiMessage(Data);
                                 }
                                 else //not a status byte
                                 {
-                                    if (!ChannelMessage.IsSet1)
+                                    if (ChannelMessage.Status!=0 && !ChannelMessage.IsSet1)
                                     {
                                         ChannelMessage.Data1 = Data;
+                                        if (MidiMessage.ByteCount(ChannelMessage.MessageClass) == 1)
+                                        {
+                                            RouteMessage(ChannelMessage);
+                                            ChannelMessage = new MidiMessage();
+                                        }
                                     }
                                     else //Data1 is full
                                     {
-                                        if (!ChannelMessage.IsSet2)
+                                        if (ChannelMessage.Status != 0 && !ChannelMessage.IsSet2)
                                         {
                                             ChannelMessage.Data2 = Data;
                                             RouteMessage(ChannelMessage);

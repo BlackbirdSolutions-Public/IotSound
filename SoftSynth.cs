@@ -49,7 +49,13 @@ namespace IotSound
                     NoteOff(theMessage);
                     break;
                 case MsgClass.NOTE_ON:
-                    NoteOn(theMessage);
+                    if (theMessage.Data2 == 0)
+                    {
+                        NoteOff(theMessage);
+                    } else
+                    {
+                        NoteOn(theMessage);
+                    }
                     break;
                 case MsgClass.CONTROL_CHANGE:
                     ControlChange(theMessage);

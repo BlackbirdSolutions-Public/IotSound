@@ -56,7 +56,7 @@ namespace IotSound
             eg.Gate = true;
             on = true;
             currentSample = 0;
-            theta = 0f;
+            //theta = 0f;
         }
 
         public void Off()
@@ -64,8 +64,8 @@ namespace IotSound
             //...or inputNode.Start()?
             eg.Gate = false;
             on = false;
-            currentSample = 0;
-            theta = 0f;
+            //currentSample = 0;
+            //theta = 0f;
         }
         public void Release()
         {

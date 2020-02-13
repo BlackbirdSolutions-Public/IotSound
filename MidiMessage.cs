@@ -16,6 +16,18 @@ namespace IotSound
         PROGRAM_CHANGE,
         CHANNEL_AFTERTOUCH,
         PITCH_BEND,
+        SYSEX,
+        QUARTER_FRAME,
+        SONG_POSITION_POINTER,
+        SONG_SELECT,
+        TUNE_REQUEST,
+        SYSEX_END,
+        TIME_CLOCK,
+        START,
+        CONTINUE,
+        STOP,
+        ACTIVE_SENSING,
+        SYSTEM_RESET,
         OTHER,
     }
 
@@ -29,8 +41,6 @@ namespace IotSound
         private int channel;
         private MsgClass messageClass;
 
-
-
         //7 collections of 16 items (1 per channel)
         public static int CalculateChannel(int theStatus)
         {
@@ -39,7 +49,9 @@ namespace IotSound
         }
         public static MsgClass CalculateMessageClass(int theStatus)
         {
-            return ( theStatus > 223 ? MsgClass.PITCH_BEND 
+            return (theStatus == 255 ? MsgClass.ACTIVE_SENSING
+                    : theStatus == 254 ? MsgClass.ACTIVE_SENSING
+                    : theStatus > 223 ? MsgClass.PITCH_BEND 
                     : theStatus > 207 ? MsgClass.CHANNEL_AFTERTOUCH 
                     : theStatus > 191 ? MsgClass.PROGRAM_CHANGE
                     : theStatus > 175 ? MsgClass.CONTROL_CHANGE
@@ -55,6 +67,30 @@ namespace IotSound
            
         }
 
+        public static int ByteCount(MsgClass theClass)
+        {
+            int theCount = 0;
+            switch(theClass)
+            {
+                case MsgClass.NOTE_OFF:
+                case MsgClass.NOTE_ON:
+                case MsgClass.CONTROL_CHANGE:
+                case MsgClass.POLY_AFTERTOUCH:
+                case MsgClass.PITCH_BEND:
+                case MsgClass.SONG_POSITION_POINTER:
+                    theCount = 2;
+                    break;
+                case MsgClass.PROGRAM_CHANGE:
+                case MsgClass.CHANNEL_AFTERTOUCH:
+                case MsgClass.SONG_SELECT:
+                    theCount = 1;
+                    break;
+                default:
+                    break;
+            }
+            return theCount;
+        }
+
         public MidiMessage(byte status)
         {
             Status = status;
@@ -65,7 +101,6 @@ namespace IotSound
             //Set the Channel
             channel = CalculateChannel(status);
             messageClass = CalculateMessageClass(status);
-
         }
 
         public byte Status { 
