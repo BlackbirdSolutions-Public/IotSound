@@ -18,11 +18,13 @@ namespace IotSound
         private AudioDeviceOutputNode deviceOutputNode;
         private bool on = false;
         private EnvelopeGenerator eg;
+        private int keyNumber = -1;
 
         public float Freq { get => freq; set => freq = value; }
         public double Theta { get => theta; set => theta = value; }
         //public double Amplitude { get => amplitude; set => amplitude = value; }
         public int SampleRate { get => sampleRate; }
+        public int KeyNumber { get => keyNumber; set => keyNumber = value; }
 
         public void Attack(int newValue)
         {
@@ -45,6 +47,10 @@ namespace IotSound
             eg.Sustain = newValue * 0.0027f;
         }
 
+        public void adjustFreq(float newFreq)
+        {
+            freq = newFreq;
+        }
         public bool isBusy()
         {
             return on;
@@ -56,7 +62,7 @@ namespace IotSound
             eg.Gate = true;
             on = true;
             currentSample = 0;
-            //theta = 0f;
+            theta = 0f;
         }
 
         public void Off()
@@ -64,6 +70,7 @@ namespace IotSound
             //...or inputNode.Start()?
             eg.Gate = false;
             on = false;
+            keyNumber = -1;
             //currentSample = 0;
             //theta = 0f;
         }

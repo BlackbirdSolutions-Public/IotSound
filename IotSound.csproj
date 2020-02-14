@@ -103,6 +103,7 @@
   <ItemGroup>
     <Compile Include="EnvelopeGenerator.cs" />
     <Compile Include="GPIOInterface.cs" />
+    <Compile Include="Keyboard.cs" />
     <Compile Include="MidiMessage.cs" />
     <Compile Include="MidiUtils.cs" />
     <Compile Include="SoftSynth.cs" />

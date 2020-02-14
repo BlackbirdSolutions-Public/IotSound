@@ -6,7 +6,7 @@ using Windows.Media.MediaProperties;
 using Windows.Media.Render;
 using Windows.Storage.Streams;
 using System.Threading.Tasks;
-
+using System.Diagnostics;
 
 namespace IotSound
 {
@@ -14,13 +14,19 @@ namespace IotSound
     public sealed class SoftSynth //default was 'internal class'
     {
         private AudioGraph graph;
+        private int pitchBendNoteRadius = 0; //number of +- notes that will span 00-127 values
+        private int pitchBendValue = 63; // 63 is the 0 point for pitch bend
         private AudioDeviceOutputNode deviceOutputNode;
         private WaveGenerator wg1;
         private WaveGenerator wg2;
         private WaveGenerator wg3;
+        private Keyboard kb;
 
         private readonly float[] keyboard = new float[127];
         private int[] notes = new int[127];
+
+        public int PitchBendNoteRadius { get => pitchBendNoteRadius; set => pitchBendNoteRadius = value; }
+        public int PitchBendValue { get => pitchBendValue; set => pitchBendValue = value; }
 
         public SoftSynth()
         {
@@ -31,12 +37,17 @@ namespace IotSound
         {
             //a virtual 128 note keyboard.
             //all possible midi note values
-            float a = 440; // a is 440 hz...
-            for (int x = 0; x < 127; ++x)
-            {
-                keyboard[x] = (a / 32f) * (float)Math.Pow(2f, ((x - 9f) / 12f));
-                notes[x] = 0;
-            }
+            //float a = 440; // a is 440 hz...
+            //for (int x = 0; x < 127; ++x)
+            //{
+            //=(440/32) * POWER(2,(A2-((pitchBendNoteRadius/64))*(63-pitchBendValue)-9)/12)
+            //keyboard[x] = (a / 32f) * (float)Math.Pow(2f, ((x - ((pitchBendNoteRadius / 64)) * (63 - pitchBendValue) - 9f) / 12f));
+
+            //    keyboard[x] = (a / 32f) * (float)Math.Pow(2f, ((x - 9f) / 12f));                
+            //    notes[x] = 0;
+            //}
+            kb = new Keyboard();
+            kb.PitchBendNoteRadius = 12;
             var xx = CreateAudioGraph();
             xx.Wait();
         }
@@ -57,6 +68,9 @@ namespace IotSound
                         NoteOn(theMessage);
                     }
                     break;
+                case MsgClass.PITCH_BEND:
+                    PitchBend(theMessage);
+                    break;
                 case MsgClass.CONTROL_CHANGE:
                     ControlChange(theMessage);
                     break;
@@ -66,25 +80,51 @@ namespace IotSound
 
         }
         
+        public void PitchBend(MidiMessage theMessage)
+        {
+            kb.SetPitchBendValue(theMessage.Data1, theMessage.Data2);
+            //Trace.WriteLine(kb.PitchBendValue);
+            if (wg1.isBusy() && wg1.KeyNumber != -1)
+            {
+                wg1.Freq = kb.getKeyFrequency(wg1.KeyNumber);
+                //Trace.WriteLine(wg1.Freq);
+            }
+            if (wg2.isBusy() && wg2.KeyNumber != -1)
+            {
+                wg2.Freq = kb.getKeyFrequency(wg2.KeyNumber);
+            }
+            if (wg3.isBusy() && wg3.KeyNumber != -1)
+            {
+                wg3.Freq = kb.getKeyFrequency(wg3.KeyNumber);
+            }
+        }
+
         public void NoteOn(MidiMessage theMessage)
         {
+            float localFreq = kb.getKeyFrequency(theMessage.Data1);
             if (notes[theMessage.Data1] == 0)
             {
                 if (!wg1.isBusy())
                 {
                     notes[theMessage.Data1] = 1;
                     wg1.On();
-                    wg1.Freq = keyboard[theMessage.Data1];
+                    wg1.Freq = localFreq;
+                    wg1.KeyNumber = theMessage.Data1;
+                    //wg1.Freq = keyboard[theMessage.Data1];
                 } else if (!wg2.isBusy())
                 {
                     notes[theMessage.Data1] = 2;
                     wg2.On();
-                    wg2.Freq = keyboard[theMessage.Data1];
+                    wg2.Freq = localFreq;
+                    wg2.KeyNumber = theMessage.Data1;
+                    //wg2.Freq = keyboard[theMessage.Data1];
                 } else if (!wg3.isBusy())
                 {
                     notes[theMessage.Data1] = 3;
                     wg3.On();
-                    wg3.Freq = keyboard[theMessage.Data1];
+                    wg3.Freq = localFreq;
+                    wg3.KeyNumber = theMessage.Data1;
+                    //wg3.Freq = keyboard[theMessage.Data1];
                 }
 
             }

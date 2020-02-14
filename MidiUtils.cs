@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -16,10 +17,6 @@ namespace IotSound
 
     class MidiUtils : IDisposable
     {
-
-        //When the buffers are full, we start throwing away data
-        //4k is arbitrary, but it seems adequate
-        public const int _MaxBufferSize = 4096;
         Action<MidiMessage> Channel0Message = null;
         Action<MidiMessage> Channel1Message = null;
         Action<MidiMessage> Channel2Message = null;
@@ -54,6 +51,7 @@ namespace IotSound
             {
                 case 0:
                     Channel0Message?.Invoke(msg);
+                    //Trace.WriteLine(msg.ToString());
                     break;
                 case 1:
                     Channel1Message?.Invoke(msg);
