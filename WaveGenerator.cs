@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using Windows.Foundation;
 using Windows.Media;
 using Windows.Media.Audio;
@@ -8,6 +9,10 @@ namespace IotSound
 {
     class WaveGenerator
     {
+        public enum OscWaveformType
+        {
+            SAW, PULSE, TRI, NOISE, SINE
+        }
         private float freq = 440.0F;
         private double theta = 0F;
         //private double amplitude = 0.3F;
@@ -19,13 +24,30 @@ namespace IotSound
         private bool on = false;
         private EnvelopeGenerator eg;
         private int keyNumber = -1;
-
-        public float Freq { get => freq; set => freq = value; }
+        private int pulseWidth = 0;
+        private OscWaveformType waveform = OscWaveformType.SINE;
+        private double sampleIncrement = 0f;
+        private float period;
+        private float halfPeriod;
+        private float quarterPeriod;
+        public float Freq
+        {
+            get => freq;
+            set { 
+                freq = value;
+                sampleIncrement = (freq * (Math.PI * 2)) / sampleRate;
+                period = sampleRate / freq;
+                halfPeriod = period/2;
+                quarterPeriod = period / 4;
+            }
+        }
         public double Theta { get => theta; set => theta = value; }
         //public double Amplitude { get => amplitude; set => amplitude = value; }
-        public int SampleRate { get => sampleRate; }
+        public int SampleRate { get => sampleRate; set => sampleRate = value; }
         public int KeyNumber { get => keyNumber; set => keyNumber = value; }
-
+        public int PulseWidth { get => pulseWidth; set => pulseWidth = value; }
+        internal OscWaveformType Waveform { get => waveform; set => waveform = value; }
+        
         public void Attack(int newValue)
         {
             //0-127 *350 ~ 1 second;
@@ -47,10 +69,6 @@ namespace IotSound
             eg.Sustain = newValue * 0.0027f;
         }
 
-        public void adjustFreq(float newFreq)
-        {
-            freq = newFreq;
-        }
         public bool isBusy()
         {
             return on;
@@ -85,9 +103,9 @@ namespace IotSound
             graph = theGraph;
             AudioEncodingProperties nodeEncodingProperties = graph.EncodingProperties;
             nodeEncodingProperties.ChannelCount = 1;
-            sampleRate = 44100;
             inputNode = graph.CreateFrameInputNode(nodeEncodingProperties);
             inputNode.Stop();
+            waveform = OscWaveformType.SINE;
             eg = new EnvelopeGenerator();
             eg.Level = 0.35f; //Set volume to a reasonable value;
             Off();
@@ -130,7 +148,7 @@ namespace IotSound
             using (IMemoryBufferReference reference = buffer.CreateReference())
             {
                 double level = 0.0f;
-                double sinValue;
+                double wavValue;
                 byte* dataInBytes;
                 uint capacityInBytes;
                 float* dataInFloat;
@@ -141,22 +159,32 @@ namespace IotSound
 
                 // Cast to float since the data we are generating is float
                 dataInFloat = (float*)dataInBytes;
-                double sampleIncrement = (freq * (Math.PI * 2)) / sampleRate;
-
+                
                 //issue here is that theta isn't the number of samples...
                 for (int i = 0; i < samples; i++)
                 {
                     if (isBusy())
                     {
                         level = eg.GetLevelAtInterval(currentSample);
-                        sinValue = level * Math.Sin(theta);
-                        dataInFloat[i] = (float)sinValue;
-
-                    } else
-                    {
+                        switch (waveform)
+                        {
+                            case OscWaveformType.SINE:
+                                wavValue = level * Math.Sin(theta);
+                                dataInFloat[i] = (float)wavValue;
+                                theta += sampleIncrement;
+                                break;
+                            case OscWaveformType.TRI:
+                                //=(ABS(MOD(A2,period)-(period/2)) -(period/4))/(period/4)
+                                wavValue = level * (Math.Abs((currentSample % period) - halfPeriod) - quarterPeriod) / (quarterPeriod);
+                                dataInFloat[i] = (float)wavValue;
+                                break;
+                            default:
+                                break;
+                        }
+                    } else {
                         dataInFloat[i] = 0.0f;
                     }
-                    theta += sampleIncrement;
+
                     currentSample += 1;
                     if (!eg.Gate)
                     {
