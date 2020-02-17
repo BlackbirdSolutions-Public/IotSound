@@ -81,8 +81,7 @@ namespace IotSound
             kb.SetPitchBendValue(theMessage.Data1, theMessage.Data2);
             if (wg1.isBusy() && wg1.KeyNumber != -1)
             {
-                wg1.SampleRate = 44100 / (theMessage.Data2 - 63);
-                //wg1.Freq = kb.getKeyFrequency(wg1.KeyNumber);
+                wg1.Freq = kb.getKeyFrequency(wg1.KeyNumber);
             }
             if (wg2.isBusy() && wg2.KeyNumber != -1)
             {
