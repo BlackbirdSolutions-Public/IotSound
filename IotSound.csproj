@@ -106,6 +106,7 @@
     <Compile Include="Keyboard.cs" />
     <Compile Include="MidiMessage.cs" />
     <Compile Include="MidiUtils.cs" />
+    <Compile Include="Oscilator.cs" />
     <Compile Include="SoftSynth.cs" />
     <Compile Include="StartupTask.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

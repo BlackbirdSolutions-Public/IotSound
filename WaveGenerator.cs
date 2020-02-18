@@ -30,6 +30,8 @@ namespace IotSound
         private float period;
         private float halfPeriod;
         private float quarterPeriod;
+        private Oscilator osc;
+
         public float Freq
         {
             get => freq;
@@ -39,6 +41,8 @@ namespace IotSound
                 period = sampleRate / freq;
                 halfPeriod = period/2;
                 quarterPeriod = period / 4;
+                osc.Pitch = Oscilator.FreqToPitch(freq);
+                osc.PulseWidth = (int)(32768);
             }
         }
         public double Theta { get => theta; set => theta = value; }
@@ -46,7 +50,31 @@ namespace IotSound
         public int SampleRate { get => sampleRate; set => sampleRate = value; }
         public int KeyNumber { get => keyNumber; set => keyNumber = value; }
         public int PulseWidth { get => pulseWidth; set => pulseWidth = value; }
-        internal OscWaveformType Waveform { get => waveform; set => waveform = value; }
+        internal OscWaveformType Waveform
+        {
+            get => waveform; set
+            {
+                waveform = value;
+                switch (waveform)
+                {
+                    case OscWaveformType.PULSE:
+                        osc.Waveform = Oscilator.OscWaveformType.PULSE;
+                        break;
+                    case OscWaveformType.SINE:
+                        osc.Waveform = Oscilator.OscWaveformType.SINE;
+                        break;
+                    case OscWaveformType.TRI:
+                        osc.Waveform = Oscilator.OscWaveformType.TRI;
+                        break;
+                    case OscWaveformType.NOISE:
+                        osc.Waveform = Oscilator.OscWaveformType.NOISE;
+                        break;
+                    default:
+                        osc.Waveform = Oscilator.OscWaveformType.SAW;
+                        break;
+                }
+            }
+        }
         
         public void Attack(int newValue)
         {
@@ -105,7 +133,8 @@ namespace IotSound
             nodeEncodingProperties.ChannelCount = 1;
             inputNode = graph.CreateFrameInputNode(nodeEncodingProperties);
             inputNode.Stop();
-            waveform = OscWaveformType.SINE;
+            waveform = OscWaveformType.PULSE;
+            osc = new Oscilator();
             eg = new EnvelopeGenerator();
             eg.Level = 0.35f; //Set volume to a reasonable value;
             Off();
@@ -166,25 +195,15 @@ namespace IotSound
                     if (isBusy())
                     {
                         level = eg.GetLevelAtInterval(currentSample);
-                        switch (waveform)
-                        {
-                            case OscWaveformType.SINE:
-                                wavValue = level * Math.Sin(theta);
-                                dataInFloat[i] = (float)wavValue;
-                                theta += sampleIncrement;
-                                break;
-                            case OscWaveformType.TRI:
-                                //=(ABS(MOD(A2,period)-(period/2)) -(period/4))/(period/4)
-                                wavValue = level * (Math.Abs((currentSample % period) - halfPeriod) - quarterPeriod) / (quarterPeriod);
-                                dataInFloat[i] = (float)wavValue;
-                                break;
-                            default:
-                                break;
-                        }
+                        osc.Run();
+                        //Trace.WriteLine("Pitch: " + osc.Pitch);
+                        //Trace.WriteLine("Value: " + osc.Value);
+                        wavValue = level * ((float)osc.Value * (2f / 65535f)) -1;
+                        dataInFloat[i] = (float)wavValue;
                     } else {
                         dataInFloat[i] = 0.0f;
                     }
-
+                    //how many samples since the note was activated?
                     currentSample += 1;
                     if (!eg.Gate)
                     {

@@ -41,9 +41,9 @@ namespace IotSound
             kb.PitchBendNoteRadius = 4;
             var xx = CreateAudioGraph();
             xx.Wait();
-            wg1.Waveform = WaveGenerator.OscWaveformType.TRI;
-            wg2.Waveform = WaveGenerator.OscWaveformType.TRI;
-            wg3.Waveform = WaveGenerator.OscWaveformType.TRI;
+            wg1.Waveform = WaveGenerator.OscWaveformType.PULSE;
+            wg2.Waveform = WaveGenerator.OscWaveformType.PULSE;
+            wg3.Waveform = WaveGenerator.OscWaveformType.PULSE;
         }
 
         public void ProcessMessage(MidiMessage theMessage)
