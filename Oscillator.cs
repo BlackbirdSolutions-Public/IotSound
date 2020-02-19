@@ -13,6 +13,23 @@ namespace IotSound
             SAW, PULSE, TRI, NOISE, SINE
         }
 
+        //Attributes
+        private int _Pitch;
+        private int _PulseWidth;
+        private int _Value;
+        private OscWaveformType _WaveForm;
+
+        private int OscNow;
+        private int OscStep;
+        private int ShiftRegister;
+
+        public const double BaseFrequence = 6.875;
+        public const int SampleRate = 44100;
+        public static int[] WaveSteps = new int[0];
+        public static double[] FreqTable = new double[0];
+        public static int[] SineTable = new int[0];
+
+        //Access functions
         public int Pitch
         {
             get
@@ -44,21 +61,6 @@ namespace IotSound
             set { this._Value = 0; this.OscNow = 0; }
         }
 
-        private int _Pitch;
-        private int _PulseWidth;
-        private int _Value;
-        private OscWaveformType _WaveForm;
-
-        private int OscNow;
-        private int OscStep;
-        private int ShiftRegister;
-
-        public const double BaseFrequence = 6.875;
-        public const int SampleRate = 44100;
-        public static int[] WaveSteps = new int[0];
-        public static double[] FreqTable = new double[0];
-        public static int[] SineTable = new int[0];
-
         public Oscillator()
         {
             if (WaveSteps.Length == 0)
@@ -81,6 +83,7 @@ namespace IotSound
 
         public static int FreqToPitch(double Frequency)
         {
+            //Very expensive method; don't use unless you have no choice
             return (int)(Math.Log(Frequency / 6.875f) * 1200f / Math.Log(2d));
         }
 
