@@ -41,9 +41,9 @@ namespace IotSound
             kb.PitchBendNoteRadius = 4;
             var xx = CreateAudioGraph();
             xx.Wait();
-            wg1.Waveform = WaveGenerator.OscWaveformType.PULSE;
-            wg2.Waveform = WaveGenerator.OscWaveformType.PULSE;
-            wg3.Waveform = WaveGenerator.OscWaveformType.PULSE;
+            wg1.Waveform = Oscillator.OscWaveformType.PULSE;
+            wg2.Waveform = Oscillator.OscWaveformType.PULSE;
+            wg3.Waveform = Oscillator.OscWaveformType.PULSE;
         }
 
         public void ProcessMessage(MidiMessage theMessage)
@@ -182,29 +182,29 @@ namespace IotSound
             switch (programNum)
             {
                 case 0:
-                    wg1.Waveform = WaveGenerator.OscWaveformType.SINE;
-                    wg2.Waveform = WaveGenerator.OscWaveformType.SINE;
-                    wg3.Waveform = WaveGenerator.OscWaveformType.SINE;
+                    wg1.Waveform = Oscillator.OscWaveformType.SINE;
+                    wg2.Waveform = Oscillator.OscWaveformType.SINE;
+                    wg3.Waveform = Oscillator.OscWaveformType.SINE;
                     break;
                 case 1:
-                    wg1.Waveform = WaveGenerator.OscWaveformType.TRI;
-                    wg2.Waveform = WaveGenerator.OscWaveformType.TRI;
-                    wg3.Waveform = WaveGenerator.OscWaveformType.TRI;
+                    wg1.Waveform = Oscillator.OscWaveformType.TRI;
+                    wg2.Waveform = Oscillator.OscWaveformType.TRI;
+                    wg3.Waveform = Oscillator.OscWaveformType.TRI;
                     break;
                 case 2:
-                    wg1.Waveform = WaveGenerator.OscWaveformType.SAW;
-                    wg2.Waveform = WaveGenerator.OscWaveformType.SAW;
-                    wg3.Waveform = WaveGenerator.OscWaveformType.SAW;
+                    wg1.Waveform = Oscillator.OscWaveformType.SAW;
+                    wg2.Waveform = Oscillator.OscWaveformType.SAW;
+                    wg3.Waveform = Oscillator.OscWaveformType.SAW;
                     break;
                 case 3:
-                    wg1.Waveform = WaveGenerator.OscWaveformType.PULSE;
-                    wg2.Waveform = WaveGenerator.OscWaveformType.PULSE;
-                    wg3.Waveform = WaveGenerator.OscWaveformType.PULSE;
+                    wg1.Waveform = Oscillator.OscWaveformType.PULSE;
+                    wg2.Waveform = Oscillator.OscWaveformType.PULSE;
+                    wg3.Waveform = Oscillator.OscWaveformType.PULSE;
                     break;
                 case 4:
-                    wg1.Waveform = WaveGenerator.OscWaveformType.NOISE;
-                    wg2.Waveform = WaveGenerator.OscWaveformType.NOISE;
-                    wg3.Waveform = WaveGenerator.OscWaveformType.NOISE;
+                    wg1.Waveform = Oscillator.OscWaveformType.NOISE;
+                    wg2.Waveform = Oscillator.OscWaveformType.NOISE;
+                    wg3.Waveform = Oscillator.OscWaveformType.NOISE;
                     break;
                 default:
                     break;

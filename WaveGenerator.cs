@@ -9,10 +9,6 @@ namespace IotSound
 {
     class WaveGenerator
     {
-        public enum OscWaveformType
-        {
-            SAW, PULSE, TRI, NOISE, SINE
-        }
         private float freq = 440.0F;
         private double theta = 0F;
         //private double amplitude = 0.3F;
@@ -25,9 +21,9 @@ namespace IotSound
         private EnvelopeGenerator eg;
         private int keyNumber = -1;
         private int pulseWidth = 0;
-        private OscWaveformType waveform = OscWaveformType.SINE;
         private double sampleIncrement = 0f;
-        private Oscilator osc;
+        private Oscillator osc;
+        private Oscillator.OscWaveformType waveform;
 
         public float Freq
         {
@@ -35,7 +31,7 @@ namespace IotSound
             set { 
                 freq = value;
                 sampleIncrement = (freq * (Math.PI * 2)) / sampleRate;
-                osc.Pitch = Oscilator.FreqToPitch(freq);
+                osc.Pitch = Oscillator.FreqToPitch(freq);
                 osc.PulseWidth = (int)(32768);
             }
         }
@@ -44,27 +40,27 @@ namespace IotSound
         public int SampleRate { get => sampleRate; set => sampleRate = value; }
         public int KeyNumber { get => keyNumber; set => keyNumber = value; }
         public int PulseWidth { get => pulseWidth; set => pulseWidth = value; }
-        internal OscWaveformType Waveform
+        internal Oscillator.OscWaveformType Waveform
         {
             get => waveform; set
             {
                 waveform = value;
                 switch (waveform)
                 {
-                    case OscWaveformType.PULSE:
-                        osc.Waveform = Oscilator.OscWaveformType.PULSE;
+                    case Oscillator.OscWaveformType.PULSE:
+                        osc.Waveform = Oscillator.OscWaveformType.PULSE;
                         break;
-                    case OscWaveformType.SINE:
-                        osc.Waveform = Oscilator.OscWaveformType.SINE;
+                    case Oscillator.OscWaveformType.SINE:
+                        osc.Waveform = Oscillator.OscWaveformType.SINE;
                         break;
-                    case OscWaveformType.TRI:
-                        osc.Waveform = Oscilator.OscWaveformType.TRI;
+                    case Oscillator.OscWaveformType.TRI:
+                        osc.Waveform = Oscillator.OscWaveformType.TRI;
                         break;
-                    case OscWaveformType.NOISE:
-                        osc.Waveform = Oscilator.OscWaveformType.NOISE;
+                    case Oscillator.OscWaveformType.NOISE:
+                        osc.Waveform = Oscillator.OscWaveformType.NOISE;
                         break;
                     default:
-                        osc.Waveform = Oscilator.OscWaveformType.SAW;
+                        osc.Waveform = Oscillator.OscWaveformType.SAW;
                         break;
                 }
             }
@@ -127,8 +123,8 @@ namespace IotSound
             nodeEncodingProperties.ChannelCount = 1;
             inputNode = graph.CreateFrameInputNode(nodeEncodingProperties);
             inputNode.Stop();
-            waveform = OscWaveformType.PULSE;
-            osc = new Oscilator();
+            waveform = Oscillator.OscWaveformType.PULSE;
+            osc = new Oscillator();
             eg = new EnvelopeGenerator();
             eg.Level = 0.35f; //Set volume to a reasonable value;
             Off();

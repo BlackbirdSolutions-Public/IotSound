@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace IotSound
 {
-    class Oscilator
+    class Oscillator
     {
         public enum OscWaveformType
         {
@@ -77,7 +77,7 @@ namespace IotSound
         public static int[] WaveSteps = new int[0];
         public static int[] SineTable = new int[0];
 
-        public Oscilator()
+        public Oscillator()
         {
             if (WaveSteps.Length == 0)
                 this.CalcSteps();
