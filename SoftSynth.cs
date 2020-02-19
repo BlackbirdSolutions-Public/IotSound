@@ -70,6 +70,9 @@ namespace IotSound
                 case MsgClass.CONTROL_CHANGE:
                     ControlChange(theMessage);
                     break;
+                case MsgClass.PROGRAM_CHANGE:
+                    ProgramChange(theMessage);
+                    break;
                 default:
                     break;
             }    
@@ -167,6 +170,41 @@ namespace IotSound
                     wg1.Release(theMessage.Data2);
                     wg2.Release(theMessage.Data2);
                     wg3.Release(theMessage.Data2);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public void ProgramChange(MidiMessage theMessage)
+        {
+            int programNum = theMessage.Data1;
+            switch (programNum)
+            {
+                case 0:
+                    wg1.Waveform = WaveGenerator.OscWaveformType.SINE;
+                    wg2.Waveform = WaveGenerator.OscWaveformType.SINE;
+                    wg3.Waveform = WaveGenerator.OscWaveformType.SINE;
+                    break;
+                case 1:
+                    wg1.Waveform = WaveGenerator.OscWaveformType.TRI;
+                    wg2.Waveform = WaveGenerator.OscWaveformType.TRI;
+                    wg3.Waveform = WaveGenerator.OscWaveformType.TRI;
+                    break;
+                case 2:
+                    wg1.Waveform = WaveGenerator.OscWaveformType.SAW;
+                    wg2.Waveform = WaveGenerator.OscWaveformType.SAW;
+                    wg3.Waveform = WaveGenerator.OscWaveformType.SAW;
+                    break;
+                case 3:
+                    wg1.Waveform = WaveGenerator.OscWaveformType.PULSE;
+                    wg2.Waveform = WaveGenerator.OscWaveformType.PULSE;
+                    wg3.Waveform = WaveGenerator.OscWaveformType.PULSE;
+                    break;
+                case 4:
+                    wg1.Waveform = WaveGenerator.OscWaveformType.NOISE;
+                    wg2.Waveform = WaveGenerator.OscWaveformType.NOISE;
+                    wg3.Waveform = WaveGenerator.OscWaveformType.NOISE;
                     break;
                 default:
                     break;

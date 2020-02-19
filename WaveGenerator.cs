@@ -27,9 +27,6 @@ namespace IotSound
         private int pulseWidth = 0;
         private OscWaveformType waveform = OscWaveformType.SINE;
         private double sampleIncrement = 0f;
-        private float period;
-        private float halfPeriod;
-        private float quarterPeriod;
         private Oscilator osc;
 
         public float Freq
@@ -38,9 +35,6 @@ namespace IotSound
             set { 
                 freq = value;
                 sampleIncrement = (freq * (Math.PI * 2)) / sampleRate;
-                period = sampleRate / freq;
-                halfPeriod = period/2;
-                quarterPeriod = period / 4;
                 osc.Pitch = Oscilator.FreqToPitch(freq);
                 osc.PulseWidth = (int)(32768);
             }
@@ -198,7 +192,7 @@ namespace IotSound
                         osc.Run();
                         //Trace.WriteLine("Pitch: " + osc.Pitch);
                         //Trace.WriteLine("Value: " + osc.Value);
-                        wavValue = level * ((float)osc.Value * (2f / 65535f)) -1;
+                        wavValue = (level * (float)osc.Value * (1f / 65535f));
                         dataInFloat[i] = (float)wavValue;
                     } else {
                         dataInFloat[i] = 0.0f;

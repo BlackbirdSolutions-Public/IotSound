@@ -24,6 +24,16 @@ namespace IotSound
         private int release = 0;//time in samples
         private double releaseSampleStart = 0;
         private bool gate = false;
+        public EnvelopeState state;
+        
+        public enum EnvelopeState
+        {
+            Init = 0,
+            Attack,
+            Decay,
+            Sustain,
+            Release
+        }
 
         public EnvelopeGenerator()
         {
@@ -41,40 +51,68 @@ namespace IotSound
         public double Sustain { get => sustain; set => sustain = value; }
         public int Release { get => release; set => release = value; }
         public double Level { get => level; set => level = value; }
-        public bool Gate { get => gate; set => gate = value; }
+        public bool Gate
+        {
+            get => gate;
+            set
+            {
+                gate = value;
+                state = EnvelopeState.Init;
+            }
+        }
 
         public double GetLevelAtInterval(int SampleIndex)
         {
             if (gate)
             {
-                //the sound should be emitting
-                //so reset the stating point for the release cycle
-                releaseSampleStart = 0;
-                if (SampleIndex <= attack && level > 0)
+                releaseSampleStart = 0; //while gate is on, we reset this to zero
+                switch (state)
                 {
-                   releaseLevel = level / attack * SampleIndex;
-                    return releaseLevel;
-                }
-                // decay and sustain
-                if (SampleIndex <= attack + decay)
-                {
-                    double s = (level - sustain); //amplitude differential
-                    double d = SampleIndex - attack; //how far into the decay
-                    if (d <= 0) { return sustain; } //cliff to sustain level
-                    if (s > 0) {
-                        releaseLevel = level - (s / decay * (d));
-                        return releaseLevel;
-                    }
-                    else  {
+                    case EnvelopeState.Init:
+                    case EnvelopeState.Attack:
+                        //set state to attack;
+                        state = EnvelopeState.Attack;
+                        if (SampleIndex>=attack) //handles a 0 attack value
+                        {
+                            releaseLevel = level; //max level
+                            state = EnvelopeState.Decay; //move to next state
+                        } else if (attack > 0)
+                        {
+                            releaseLevel = (level / attack) * SampleIndex;
+                        }
+                        break;
+                    case EnvelopeState.Decay:
+                        if (SampleIndex <= attack + decay)
+                        {
+                            //what to do during decay and sustain
+                            double s = (level - sustain); //amplitude differential
+                            double d = SampleIndex - attack; //how far into the decay
+                            if (d <= 0) { return sustain; } //cliff to sustain level
+                            if (s > 0)
+                            {
+                                releaseLevel = level - (s / decay * (d));
+                            }
+                            else
+                            {
+                                releaseLevel = sustain;
+                            }
+                        }
+                        else
+                        {
+                            state = EnvelopeState.Sustain; //changing state
+                            releaseLevel = sustain;
+                        }
+                        break;
+                    case EnvelopeState.Sustain:
                         releaseLevel = sustain;
-                        return releaseLevel;
-                    }
-                } else {
-                    releaseLevel =  sustain;
-                    return releaseLevel;
+                        break;
+                    default:
+                        break;    
                 }
+                return releaseLevel;
             } else //gate is off
             {
+                state = EnvelopeState.Release;
                 //entering this block for the first time
                 if (releaseSampleStart == 0) { 
                     releaseSampleStart = SampleIndex; 
