@@ -15,7 +15,7 @@ namespace IotSound
         //of theta (Number of samples from the start) and the max amplitude
         //
 
-        private double level = 0.35f; //
+        private double maxLevel = 0.35f; //
         private int sampleRate = 44100;
         private int attack = 1000;//time in samples
         private int decay = 43000;//time in samples
@@ -38,19 +38,41 @@ namespace IotSound
         public EnvelopeGenerator()
         {
             this.sampleRate = 44100;
-            this.level = 0.35f;
+            this.maxLevel = 0.35f;
             this.attack = 0;
             this.decay = 0;
             this.sustain = 0.35;
             this.release = 0;
         }
 
+        public double MaxLevel { get => maxLevel; set => maxLevel = value; }
         public int SampleRate { get => sampleRate; set => sampleRate = value; }
-        public int Attack { get => attack; set => attack = value; }
-        public int Decay { get => decay; set => decay = value; }
-        public double Sustain { get => sustain; set => sustain = value; }
-        public int Release { get => release; set => release = value; }
-        public double Level { get => level; set => level = value; }
+        //accept 0-127
+        public int Attack 
+        { 
+            get => attack; 
+            set { attack = value * 350; }
+        }
+        public int Decay 
+        { 
+            get => decay;
+            set { decay = value * 350; }
+        }
+       
+        //accepts
+        public double Sustain
+        {
+            get => sustain;
+            set { sustain = value * (maxLevel/127f); }
+        }
+        public int Release
+        {
+            get => release;
+            set
+            {
+                release = value * 350;
+            }
+        }
         public bool Gate
         {
             get => gate;
@@ -74,23 +96,23 @@ namespace IotSound
                         state = EnvelopeState.Attack;
                         if (SampleIndex>=attack) //handles a 0 attack value
                         {
-                            releaseLevel = level; //max level
+                            releaseLevel = maxLevel; //max level
                             state = EnvelopeState.Decay; //move to next state
                         } else if (attack > 0)
                         {
-                            releaseLevel = (level / attack) * SampleIndex;
+                            releaseLevel = (maxLevel / attack) * SampleIndex;
                         }
                         break;
                     case EnvelopeState.Decay:
                         if (SampleIndex <= attack + decay)
                         {
                             //what to do during decay and sustain
-                            double s = (level - sustain); //amplitude differential
+                            double s = (maxLevel - sustain); //amplitude differential
                             double d = SampleIndex - attack; //how far into the decay
                             if (d <= 0) { return sustain; } //cliff to sustain level
                             if (s > 0)
                             {
-                                releaseLevel = level - (s / decay * (d));
+                                releaseLevel = maxLevel - (s / decay * (d));
                             }
                             else
                             {

@@ -9,10 +9,7 @@ namespace IotSound
 {
     class WaveGenerator
     {
-        private float freq = 440.0F;
-        private double theta = 0F;
-        //private double amplitude = 0.3F;
-        private int sampleRate = 44100;
+        private int pitch = 300;
         private int currentSample = 0;
         private AudioFrameInputNode inputNode;
         private AudioGraph graph;
@@ -23,68 +20,37 @@ namespace IotSound
         private int pulseWidth = 0;
         private double sampleIncrement = 0f;
         private Oscillator osc;
-        private Oscillator.OscWaveformType waveform;
 
-        public float Freq
-        {
-            get => freq;
-            set { 
-                freq = value;
-                sampleIncrement = (freq * (Math.PI * 2)) / sampleRate;
-                osc.Pitch = Oscillator.FreqToPitch(freq);
-                osc.PulseWidth = (int)(32768);
-            }
-        }
-        public double Theta { get => theta; set => theta = value; }
         //public double Amplitude { get => amplitude; set => amplitude = value; }
-        public int SampleRate { get => sampleRate; set => sampleRate = value; }
+        public int SampleRate
+        {
+            get => Oscillator.SampleRate;
+        }
         public int KeyNumber { get => keyNumber; set => keyNumber = value; }
         public int PulseWidth { get => pulseWidth; set => pulseWidth = value; }
-        internal Oscillator.OscWaveformType Waveform
+        public int EGAttack { get => eg.Attack; set => eg.Attack = value; }
+        public int EGDecay { get => eg.Decay; set => eg.Decay = value; }
+        public double EGSustain { get => eg.Sustain; set => eg.Sustain = value; }
+        public int EGRelease { get => eg.Release; set => eg.Release = value; }
+
+        public int Pitch
         {
-            get => waveform; set
+            get => pitch;
+            set
             {
-                waveform = value;
-                switch (waveform)
-                {
-                    case Oscillator.OscWaveformType.PULSE:
-                        osc.Waveform = Oscillator.OscWaveformType.PULSE;
-                        break;
-                    case Oscillator.OscWaveformType.SINE:
-                        osc.Waveform = Oscillator.OscWaveformType.SINE;
-                        break;
-                    case Oscillator.OscWaveformType.TRI:
-                        osc.Waveform = Oscillator.OscWaveformType.TRI;
-                        break;
-                    case Oscillator.OscWaveformType.NOISE:
-                        osc.Waveform = Oscillator.OscWaveformType.NOISE;
-                        break;
-                    default:
-                        osc.Waveform = Oscillator.OscWaveformType.SAW;
-                        break;
-                }
+                pitch = value;
+                sampleIncrement = ((Oscillator.FreqTable[value]) * (Math.PI * 2)) / SampleRate;
+                osc.Pitch = pitch;
             }
         }
-        
-        public void Attack(int newValue)
+
+        public Oscillator.OscWaveformType Waveform
         {
-            //0-127 *350 ~ 1 second;
-            eg.Attack = newValue*350;
-        }
-        public void Decay(int newValue)
-        {
-            //0-127 *350 ~ 1 second;
-            eg.Decay = newValue * 350;
-        }
-        public void Release(int newValue)
-        {
-            //0-127 *350 ~ 1 second;
-            eg.Release = newValue * 350;
-        }
-        public void Sustain(int newValue)
-        {
-            //0-127 *350 ~ 1 second;
-            eg.Sustain = newValue * 0.0027f;
+            get => osc.Waveform; 
+            set
+            {
+                osc.Waveform = value;
+            }
         }
 
         public bool isBusy()
@@ -98,7 +64,6 @@ namespace IotSound
             eg.Gate = true;
             on = true;
             currentSample = 0;
-            theta = 0f;
         }
 
         public void Off()
@@ -107,8 +72,6 @@ namespace IotSound
             eg.Gate = false;
             on = false;
             keyNumber = -1;
-            //currentSample = 0;
-            //theta = 0f;
         }
         public void Release()
         {
@@ -123,10 +86,9 @@ namespace IotSound
             nodeEncodingProperties.ChannelCount = 1;
             inputNode = graph.CreateFrameInputNode(nodeEncodingProperties);
             inputNode.Stop();
-            waveform = Oscillator.OscWaveformType.PULSE;
             osc = new Oscillator();
             eg = new EnvelopeGenerator();
-            eg.Level = 0.35f; //Set volume to a reasonable value;
+            eg.MaxLevel = 0.35f; //Set volume to a reasonable value;
             Off();
         }
 
@@ -186,8 +148,6 @@ namespace IotSound
                     {
                         level = eg.GetLevelAtInterval(currentSample);
                         osc.Run();
-                        //Trace.WriteLine("Pitch: " + osc.Pitch);
-                        //Trace.WriteLine("Value: " + osc.Value);
                         wavValue = (level * (float)osc.Value * (1f / 65535f));
                         dataInFloat[i] = (float)wavValue;
                     } else {

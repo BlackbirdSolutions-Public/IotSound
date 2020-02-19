@@ -38,12 +38,9 @@ namespace IotSound
         {
 
             kb = new Keyboard();
-            kb.PitchBendNoteRadius = 4;
+            kb.PitchBendNoteRadius = 2;
             var xx = CreateAudioGraph();
             xx.Wait();
-            wg1.Waveform = Oscillator.OscWaveformType.PULSE;
-            wg2.Waveform = Oscillator.OscWaveformType.PULSE;
-            wg3.Waveform = Oscillator.OscWaveformType.PULSE;
         }
 
         public void ProcessMessage(MidiMessage theMessage)
@@ -84,40 +81,41 @@ namespace IotSound
             kb.SetPitchBendValue(theMessage.Data1, theMessage.Data2);
             if (wg1.isBusy() && wg1.KeyNumber != -1)
             {
-                wg1.Freq = kb.getKeyFrequency(wg1.KeyNumber);
+                wg1.Pitch = kb.getKeyPitch(wg1.KeyNumber);
             }
             if (wg2.isBusy() && wg2.KeyNumber != -1)
             {
-                wg2.Freq = kb.getKeyFrequency(wg2.KeyNumber);
+                wg2.Pitch = kb.getKeyPitch(wg2.KeyNumber);
             }
             if (wg3.isBusy() && wg3.KeyNumber != -1)
             {
-                wg3.Freq = kb.getKeyFrequency(wg3.KeyNumber);
+                wg3.Pitch = kb.getKeyPitch(wg3.KeyNumber);
             }
         }
 
         public void NoteOn(MidiMessage theMessage)
         {
-            float localFreq = kb.getKeyFrequency(theMessage.Data1);
+            //float localFreq = kb.getKeyFrequency(theMessage.Data1);
+            int localPitch = kb.getKeyPitch(theMessage.Data1);
             if (notes[theMessage.Data1] == 0)
             {
                 if (!wg1.isBusy())
                 {
                     notes[theMessage.Data1] = 1;
                     wg1.On();
-                    wg1.Freq = localFreq;
+                    wg1.Pitch = localPitch;
                     wg1.KeyNumber = theMessage.Data1;
                 } else if (!wg2.isBusy())
                 {
                     notes[theMessage.Data1] = 2;
                     wg2.On();
-                    wg2.Freq = localFreq;
+                    wg2.Pitch = localPitch;
                     wg2.KeyNumber = theMessage.Data1;
                 } else if (!wg3.isBusy())
                 {
                     notes[theMessage.Data1] = 3;
                     wg3.On();
-                    wg3.Freq = localFreq;
+                    wg3.Pitch = localPitch;
                     wg3.KeyNumber = theMessage.Data1;
                 }
 
@@ -152,24 +150,24 @@ namespace IotSound
             switch (controlNum)
             {
                 case 0:
-                    wg1.Attack(theMessage.Data2);
-                    wg2.Attack(theMessage.Data2);
-                    wg3.Attack(theMessage.Data2);
+                    wg1.EGAttack = theMessage.Data2;
+                    wg2.EGAttack = theMessage.Data2;
+                    wg3.EGAttack = theMessage.Data2;
                     break;
                 case 1:
-                    wg1.Decay(theMessage.Data2);
-                    wg2.Decay(theMessage.Data2);
-                    wg3.Decay(theMessage.Data2);
+                    wg1.EGDecay = theMessage.Data2;
+                    wg2.EGDecay = theMessage.Data2;
+                    wg3.EGDecay = theMessage.Data2;
                     break;
                 case 2:
-                    wg1.Sustain(theMessage.Data2);
-                    wg2.Sustain(theMessage.Data2);
-                    wg3.Sustain(theMessage.Data2);
+                    wg1.EGSustain = theMessage.Data2;
+                    wg2.EGSustain = theMessage.Data2;
+                    wg3.EGSustain = theMessage.Data2;
                     break;
                 case 3:
-                    wg1.Release(theMessage.Data2);
-                    wg2.Release(theMessage.Data2);
-                    wg3.Release(theMessage.Data2);
+                    wg1.EGRelease = theMessage.Data2;
+                    wg2.EGRelease = theMessage.Data2;
+                    wg3.EGRelease = theMessage.Data2;
                     break;
                 default:
                     break;

@@ -28,39 +28,20 @@ namespace IotSound
 
         public int PulseWidth
         {
-            get
-            {
-                return this._PulseWidth;
-            }
-            set
-            {
-                this._PulseWidth = this.MinMax(0, value, 65535);
-            }
+            get { return this._PulseWidth; }
+            set { this._PulseWidth = this.MinMax(0, value, 65535); }
         }
 
         public OscWaveformType Waveform
         {
-            get
-            {
-                return this._WaveForm;
-            }
-            set
-            {
-                this._WaveForm = value;
-            }
+            get { return this._WaveForm; }
+            set { this._WaveForm = value; }
         }
 
         public int Value
         {
-            get
-            {
-                return this._Value;
-            }
-            set
-            {
-                this._Value = 0;
-                this.OscNow = 0;
-            }
+            get { return this._Value; }
+            set { this._Value = 0; this.OscNow = 0; }
         }
 
         private int _Pitch;
@@ -75,6 +56,7 @@ namespace IotSound
         public const double BaseFrequence = 6.875;
         public const int SampleRate = 44100;
         public static int[] WaveSteps = new int[0];
+        public static double[] FreqTable = new double[0];
         public static int[] SineTable = new int[0];
 
         public Oscillator()
@@ -85,9 +67,10 @@ namespace IotSound
             if (SineTable.Length == 0)
                 this.CalcSine();
 
+            //sane defaults
             this._Pitch = 7200;
             this._PulseWidth = 32768;
-            this._WaveForm = OscWaveformType.SAW;
+            this._WaveForm = OscWaveformType.SINE;
 
             this.ShiftRegister = 0x7ffff8;
 
@@ -101,9 +84,15 @@ namespace IotSound
             return (int)(Math.Log(Frequency / 6.875f) * 1200f / Math.Log(2d));
         }
 
+        public static double PitchToFreq(int pitch)
+        {
+            return FreqTable[pitch];
+        }
+
         private void CalcSteps()
         {
             WaveSteps = new int[14400];
+            FreqTable = new double[14400];
 
             for (int i = 0; i < 14400; i++)
             {
@@ -111,6 +100,7 @@ namespace IotSound
 
                 t0 = Math.Pow(2.0, (double)i / 1200.0);
                 t1 = BaseFrequence * t0;
+                FreqTable[i] = t1;
                 t2 = t1 * 65536.0 / SampleRate;
                 WaveSteps[i] = (int)Math.Round(t2 * 4096.0);
             }
